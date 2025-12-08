@@ -1,1 +1,180 @@
-git 
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link rel="icon" type="image/png" href="images/music.png" />
+<title>FavMusic — Modern Player</title>
+<style>
+:root{
+  --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#7c3aed; --glass: rgba(255,255,255,0.03);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:system-ui,Segoe UI,Roboto,Arial; min-height:100vh;
+  background: linear-gradient(180deg,#071025 0%, #081426 60%);
+  color:#e6eef8;
+}
+header{
+  width:100%; padding:12px 24px; display:flex; align-items:center; justify-content:space-between;
+  background: var(--card); position:sticky; top:0; z-index:100; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+header h1{margin:0; font-size:20px; cursor:pointer; color:var(--accent);}
+header nav a{margin-left:18px; color:#e6eef8; text-decoration:none; font-weight:500;}
+header nav a:hover{color:var(--accent);}
+.container{display:flex; justify-content:center; padding:24px;}
+.player{
+  width:100%; max-width:980px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:18px; padding:18px; box-shadow: 0 10px 30px rgba(2,6,23,0.7);
+  display:grid; grid-template-columns:320px 1fr; gap:18px;
+}
+.left{display:flex; flex-direction:column; gap:14px; align-items:center;}
+.cover{
+  width:100%; aspect-ratio:1/1; background:linear-gradient(135deg,var(--accent), #2b6ce4);
+  border-radius:12px; display:flex; align-items:center; justify-content:center; background-size:cover;
+}
+.title{font-weight:700; font-size:18px; text-align:center;}
+.artist{font-size:13px; color:var(--muted); text-align:center;}
+.progress{height:10px; background:rgba(255,255,255,0.05); border-radius:999px; cursor:pointer; width:100%;}
+.progress .bar{height:100%; width:0%; border-radius:999px; background:linear-gradient(90deg,var(--accent), #2b6ce4);}
+.time{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); width:100%;}
+.controls{display:flex; justify-content:center; gap:10px; flex-wrap:wrap;}
+button{background:var(--glass); border:0; color:white; padding:10px 14px; border-radius:10px; cursor:pointer; transition:0.2s;}
+button:hover{background:rgba(124,58,237,0.25);}
+.right{display:flex; flex-direction:column;}
+.playlist{margin-top:10px; overflow:auto; max-height:420px;}
+.track{padding:10px; border-radius:10px; cursor:pointer; display:flex; align-items:center; gap:10px;}
+.track img{width:40px; height:40px; object-fit:cover; border-radius:6px;}
+.track:hover{background:rgba(255,255,255,0.05);}
+.track.playing{background:rgba(124,58,237,0.25);}
+.pagination{display:flex; justify-content:center; gap:6px; margin-top:8px;}
+.pagination button{padding:4px 8px; font-size:12px;}
+footer{margin-top:24px;text-align:center;color:var(--muted); font-size:12px;}
+@media (max-width:880px){
+  .player{grid-template-columns:1fr}
+  .left{flex-direction:row; gap:12px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1></h1>
+  <nav></nav>
+</header>
+
+<div class="container">
+<div class="player">
+  <div class="left">
+    <div class="cover" id="cover"></div>
+    <div class="title" id="title">Loading...</div>
+    <div class="artist" id="artist"></div>
+    <div class="progress" id="progress"><div class="bar" id="bar"></div></div>
+    <div class="time"><span id="current">0:00</span><span id="duration">0:00</span></div>
+    <div class="controls">
+      <button id="prev"><i class="fas fa-backward"></i></button>
+      <button id="play"><i class="fas fa-play"></i></button>
+      <button id="next"><i class="fas fa-forward"></i></button>
+      <button id="shuffle"><i class="fas fa-random"></i></button>
+      <button id="repeat"><i class="fas fa-repeat"></i></button>
+      <input type="range" id="volume" min="0" max="1" step="0.01" value="1" title="Volume">
+    </div>
+  </div>
+  <div class="right">
+    <b>Playlist</b>
+    <div class="playlist" id="playlist"></div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</div>
+</div>
+<footer>FavMusic Player • Made with Bitch</footer>
+
+<audio id="audio"></audio>
+
+<script>
+const audio = document.getElementById('audio');
+const titleEl = document.getElementById('title');
+const artistEl = document.getElementById('artist');
+const playBtn = document.getElementById('play');
+const nextBtn = document.getElementById('next');
+const prevBtn = document.getElementById('prev');
+const bar = document.getElementById('bar');
+const progress = document.getElementById('progress');
+const currentTimeEl = document.getElementById('current');
+const durationEl = document.getElementById('duration');
+const playlistEl = document.getElementById('playlist');
+const coverEl = document.getElementById('cover');
+const shuffleBtn = document.getElementById('shuffle');
+const repeatBtn = document.getElementById('repeat');
+const volumeSlider = document.getElementById('volume');
+const paginationEl = document.getElementById('pagination');
+
+let playlist = [
+  {title:"Tabun",artist:"Yoasobi",file:"music/Tabun.mp3",cover:"cover/tabun.jpeg"},
+  {title:"Orange",artist:"7!!",file:"music/Orange.mp3",cover:"cover/orange.jpeg"},
+  {title:"Ren Swan",artist:"進撃の巨人",file:"music/Redswan.mp3",cover:"cover/redswan.jpeg"},
+  {title:"Kamado Tanjiro no Uta",artist:"Risa Oribe",file:"music/Kamado.mp3",cover:"cover/kamado.jpeg"},
+  {title:"Memories",artist:"Maki Otsuki",file:"music/Memories.mp3",cover:"cover/memories.jpeg"},
+
+];
+
+let current=0, isShuffle=false, isRepeat=false;
+let currentPage=1, songsPerPage=9;
+
+function formatTime(s){ if(!isFinite(s)) return '0:00'; s=Math.floor(s); const m=Math.floor(s/60); const sec=s%60; return m+':' + (sec<10?'0':'')+sec; }
+
+function renderPlaylist(){
+  playlistEl.innerHTML='';
+  let start=(currentPage-1)*songsPerPage;
+  let end=Math.min(start+songsPerPage, playlist.length);
+  for(let i=start;i<end;i++){
+    const song=playlist[i];
+    const div=document.createElement('div');
+    div.className='track'+(i===current?' playing':'');
+    div.innerHTML=`<span style="width:20px">${i+1}</span><img src="${song.cover}" alt="${song.title}"><span>${song.title} - ${song.artist}</span>`;
+    div.onclick=()=> loadSong(i);
+    playlistEl.appendChild(div);
+  }
+  renderPagination();
+}
+
+function renderPagination(){
+  paginationEl.innerHTML='';
+  const totalPages=Math.ceil(playlist.length/songsPerPage);
+  for(let i=1;i<=totalPages;i++){
+    const btn=document.createElement('button');
+    btn.textContent=i;
+    btn.style.background=i===currentPage?'rgba(124,58,237,0.25)':'var(--glass)';
+    btn.onclick=()=>{currentPage=i; renderPlaylist();}
+    paginationEl.appendChild(btn);
+  }
+}
+
+function loadSong(i){
+  current=i;
+  const song=playlist[i];
+  audio.src=song.file;
+  titleEl.textContent=song.title;
+  artistEl.textContent=song.artist || 'Unknown';
+  coverEl.style.backgroundImage=`url('${song.cover}')`;
+  audio.play();
+  renderPlaylist();
+}
+
+playBtn.onclick=()=>audio.paused?audio.play():audio.pause();
+nextBtn.onclick=()=>{if(isShuffle) loadSong(Math.floor(Math.random()*playlist.length)); else loadSong((current+1)%playlist.length);}
+prevBtn.onclick=()=>loadSong((current-1+playlist.length)%playlist.length);
+shuffleBtn.onclick=()=>{isShuffle=!isShuffle; shuffleBtn.style.backgroundColor=isShuffle?'rgba(124,58,237,0.25)':'var(--glass)';}
+repeatBtn.onclick=()=>{isRepeat=!isRepeat; repeatBtn.style.backgroundColor=isRepeat?'rgba(124,58,237,0.25)':'var(--glass)';}
+volumeSlider.oninput=()=>audio.volume=volumeSlider.value;
+
+audio.ontimeupdate=()=>{bar.style.width=(audio.currentTime/audio.duration)*100+'%'; currentTimeEl.textContent=formatTime(audio.currentTime); durationEl.textContent=formatTime(audio.duration);}
+progress.onclick=(e)=>{audio.currentTime=(e.offsetX/progress.clientWidth)*audio.duration;}
+audio.onended=()=>{if(isRepeat) loadSong(current); else nextBtn.onclick();}
+
+// initialize
+renderPlaylist();
+loadSong(0);
+</script>
+</body>
+</html>
