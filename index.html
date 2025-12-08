@@ -29,7 +29,9 @@ header nav a:hover{color:var(--accent);}
   border-radius:18px; padding:18px; box-shadow: 0 10px 30px rgba(2,6,23,0.7);
   display:grid; grid-template-columns:320px 1fr; gap:18px;
 }
-.left{display:flex; flex-direction:column; gap:14px; align-items:center;}
+.left{
+  display:flex; flex-direction:column; gap:14px; align-items:center;
+}
 .cover{
   width:100%; aspect-ratio:1/1; background:linear-gradient(135deg,var(--accent), #2b6ce4);
   border-radius:12px; display:flex; align-items:center; justify-content:center; background-size:cover;
@@ -42,25 +44,44 @@ header nav a:hover{color:var(--accent);}
 .controls{display:flex; justify-content:center; gap:10px; flex-wrap:wrap;}
 button{background:var(--glass); border:0; color:white; padding:10px 14px; border-radius:10px; cursor:pointer; transition:0.2s;}
 button:hover{background:rgba(124,58,237,0.25);}
+input[type=range]{cursor:pointer;}
 .right{display:flex; flex-direction:column;}
 .playlist{margin-top:10px; overflow:auto; max-height:420px;}
 .track{padding:10px; border-radius:10px; cursor:pointer; display:flex; align-items:center; gap:10px;}
 .track img{width:40px; height:40px; object-fit:cover; border-radius:6px;}
 .track:hover{background:rgba(255,255,255,0.05);}
 .track.playing{background:rgba(124,58,237,0.25);}
-.pagination{display:flex; justify-content:center; gap:6px; margin-top:8px;}
+.pagination{display:flex; justify-content:center; gap:6px; margin-top:8px; flex-wrap:wrap;}
 .pagination button{padding:4px 8px; font-size:12px;}
 footer{margin-top:24px;text-align:center;color:var(--muted); font-size:12px;}
+
+/* Responsive adjustments */
 @media (max-width:880px){
-  .player{grid-template-columns:1fr}
-  .left{flex-direction:row; gap:12px}
+  .player{grid-template-columns:1fr; padding:12px;}
+  .left{flex-direction:column; align-items:center;}
+  .cover{width:80%; max-width:250px;}
+  .controls{gap:8px; flex-wrap:wrap;}
+  .playlist{max-height:300px;}
+}
+
+@media (max-width:500px){
+  header{flex-direction:column; align-items:flex-start;}
+  header nav a{margin-left:0; margin-top:8px;}
+  .cover{width:100%; max-width:200px;}
+  .title{font-size:16px;}
+  .artist{font-size:12px;}
+  .controls button{padding:8px 10px; font-size:14px;}
+  .time{font-size:11px;}
+  .pagination button{padding:3px 6px; font-size:10px;}
 }
 </style>
 </head>
 <body>
 <header>
   <h1></h1>
-  <nav></nav>
+  <nav>
+ 
+  </nav>
 </header>
 
 <div class="container">
@@ -92,6 +113,7 @@ footer{margin-top:24px;text-align:center;color:var(--muted); font-size:12px;}
 <audio id="audio"></audio>
 
 <script>
+// Playlist and Player logic
 const audio = document.getElementById('audio');
 const titleEl = document.getElementById('title');
 const artistEl = document.getElementById('artist');
@@ -115,9 +137,7 @@ let playlist = [
   {title:"Ren Swan",artist:"進撃の巨人",file:"music/Redswan.mp3",cover:"cover/redswan.jpeg"},
   {title:"Kamado Tanjiro no Uta",artist:"Risa Oribe",file:"music/Kamado.mp3",cover:"cover/kamado.jpeg"},
   {title:"Memories",artist:"Maki Otsuki",file:"music/Memories.mp3",cover:"cover/memories.jpeg"},
-
 ];
-
 let current=0, isShuffle=false, isRepeat=false;
 let currentPage=1, songsPerPage=9;
 
