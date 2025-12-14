@@ -7,6 +7,44 @@
 <link rel="icon" type="image/png" href="images/music.png" />
 <title>FavMusic — Modern Player</title>
 <style>
+  /* Light mode variables */
+body.light{
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --muted:#5b6472;
+  --accent:#7c3aed;
+  --glass: rgba(0,0,0,0.05);
+  background: linear-gradient(180deg,#e9ecf3 0%, #f5f7fb 60%);
+  color:#0f1724;
+}
+
+/* Floating toggle button */
+.theme-toggle{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  background:var(--card);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow:0 8px 20px rgba(0,0,0,0.3);
+  z-index:999;
+  transition:0.3s;
+}
+
+.theme-toggle i{
+  font-size:20px;
+  color:var(--accent);
+}
+
+.theme-toggle:hover{
+  transform:scale(1.1);
+}
+
 :root{
   --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#7c3aed; --glass: rgba(255,255,255,0.03);
 }
@@ -74,9 +112,191 @@ footer{margin-top:24px;text-align:center;color:var(--muted); font-size:12px;}
   .time{font-size:11px;}
   .pagination button{padding:3px 6px; font-size:10px;}
 }
+
+/* Playlist scrollbar */
+.playlist::-webkit-scrollbar{
+  width:8px;
+}
+
+.playlist::-webkit-scrollbar-track{
+  background:transparent;
+}
+
+.playlist::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,var(--accent), #2b6ce4);
+  border-radius:10px;
+}
+
+.playlist::-webkit-scrollbar-thumb:hover{
+  background:var(--accent);
+}
+
+/* Firefox */
+.playlist{
+  scrollbar-width:thin;
+  scrollbar-color: var(--accent) transparent;
+}
+/* ===== FIX CONTROLS COLOR IN LIGHT MODE ===== */
+body.light button{
+  color:#0f1724;
+}
+
+body.light button:hover{
+  background:rgba(124,58,237,0.15);
+}
+
+body.light .controls i{
+  color:#0f1724;
+}
+
+/* Progress bar background */
+body.light .progress{
+  background:rgba(0,0,0,0.1);
+}
+
+/* Playlist text */
+body.light .track{
+  color:#0f1724;
+}
+
+body.light .track:hover{
+  background:rgba(0,0,0,0.05);
+}
+
+/* Pagination buttons */
+body.light .pagination button{
+  color:#0f1724;
+}
+
+/* Header text */
+body.light header nav a{
+  color:#0f1724;
+}
+body.light .controls button{
+  border:1px solid rgba(0,0,0,0.08);
+}
+
+#likeBtn.active i{
+  color:#ff4d6d;
+}
+
+.progress .bar{
+  transition: width 0.2s linear;
+}
+.track.playing::after{
+  content:"🎵";
+  margin-left:auto;
+}
+
+/* ===== VIDEO MODAL ===== */
+.video-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+
+.video-modal.show{
+  display:flex;
+}
+
+#videoCanvas{
+  width:400px;
+  max-width:90vw;
+  border-radius:12px;
+}
+
+#greenVideo{
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+}
+
+
+#closeVideo{
+  position:absolute;
+  top:20px;
+  right:20px;
+  background:var(--card);
+  border:none;
+  color:inherit;
+  font-size:18px;
+  padding:8px 12px;
+  border-radius:50%;
+  cursor:pointer;
+}
+
+/* ===== MOBILE FLOATING ICON FIX ===== */
+@media (max-width:600px){
+
+  .theme-toggle{
+    width:44px;
+    height:44px;
+    bottom:16px;
+    right:16px;
+  }
+
+  /* Video toggle sits ABOVE theme toggle */
+  #videoToggle{
+    right:16px !important;
+    bottom:72px;
+  }
+
+  .theme-toggle i{
+    font-size:18px;
+  }
+}
+
+/* Extra small phones */
+@media (max-width:380px){
+  .theme-toggle{
+    width:40px;
+    height:40px;
+  }
+
+  #videoToggle{
+    bottom:64px;
+  }
+
+  .theme-toggle i{
+    font-size:16px;
+  }
+}
+
+.video-modal{
+  pointer-events:auto;
+}
+
+.theme-toggle{
+  touch-action:manipulation;
+}
+
+
 </style>
 </head>
+
 <body>
+  <div class="theme-toggle" id="themeToggle" title="Toggle theme">
+  <i class="fas fa-moon" id="themeIcon"></i>
+</div>
+<div class="theme-toggle" id="videoToggle" title="Play video"
+     style="right:80px;">
+  <i class="fas fa-video"></i>
+</div>
+
+<div id="videoModal" class="video-modal">
+  <canvas id="videoCanvas"></canvas>
+  <button id="closeVideo">✕</button>
+
+  <video id="greenVideo" muted loop playsinline>
+    <source src="images/wagurigif.mp4" type="video/mp4">
+  </video>
+</div>
+
+
 <header>
   <h1></h1>
   <nav>
@@ -93,15 +313,32 @@ footer{margin-top:24px;text-align:center;color:var(--muted); font-size:12px;}
     <div class="progress" id="progress"><div class="bar" id="bar"></div></div>
     <div class="time"><span id="current">0:00</span><span id="duration">0:00</span></div>
     <div class="controls">
+
       <button id="prev"><i class="fas fa-backward"></i></button>
       <button id="play"><i class="fas fa-play"></i></button>
       <button id="next"><i class="fas fa-forward"></i></button>
       <button id="shuffle"><i class="fas fa-random"></i></button>
       <button id="repeat"><i class="fas fa-repeat"></i></button>
+      
       <input type="range" id="volume" min="0" max="1" step="0.01" value="1" title="Volume">
     </div>
   </div>
   <div class="right">
+    <input
+  type="text"
+  id="search"
+  placeholder="Search song or artist..."
+  style="
+    padding:10px;
+    border-radius:10px;
+    border:none;
+    margin-bottom:10px;
+    background:var(--glass);
+    color:inherit;
+    outline:none;
+  "
+/>
+
     <b>Playlist</b>
     <div class="playlist" id="playlist"></div>
     <div class="pagination" id="pagination"></div>
@@ -130,6 +367,8 @@ const shuffleBtn = document.getElementById('shuffle');
 const repeatBtn = document.getElementById('repeat');
 const volumeSlider = document.getElementById('volume');
 const paginationEl = document.getElementById('pagination');
+const searchInput = document.getElementById('search');
+
 
 let playlist = [
   {title:"Tabun",artist:"Yoasobi",file:"music/Tabun.mp3",cover:"cover/tabun.jpeg"},
@@ -151,30 +390,69 @@ function formatTime(s){ if(!isFinite(s)) return '0:00'; s=Math.floor(s); const m
 
 function renderPlaylist(){
   playlistEl.innerHTML='';
-  let start=(currentPage-1)*songsPerPage;
-  let end=Math.min(start+songsPerPage, playlist.length);
-  for(let i=start;i<end;i++){
-    const song=playlist[i];
-    const div=document.createElement('div');
-    div.className='track'+(i===current?' playing':'');
-    div.innerHTML=`<span style="width:20px">${i+1}</span><img src="${song.cover}" alt="${song.title}"><span>${song.title} - ${song.artist}</span>`;
-    div.onclick=()=> loadSong(i);
+
+  const keyword = searchInput.value.toLowerCase();
+
+  const filteredPlaylist = playlist.filter(song =>
+    song.title.toLowerCase().includes(keyword) ||
+    song.artist.toLowerCase().includes(keyword)
+  );
+
+  let start = (currentPage - 1) * songsPerPage;
+  let end = Math.min(start + songsPerPage, filteredPlaylist.length);
+
+  for(let i = start; i < end; i++){
+    const song = filteredPlaylist[i];
+
+    const realIndex = playlist.indexOf(song);
+
+    const div = document.createElement('div');
+    div.className = 'track' + (realIndex === current ? ' playing' : '');
+
+    div.innerHTML = `
+      <span style="width:20px">${realIndex + 1}</span>
+      <img src="${song.cover}">
+      <span>${song.title} - ${song.artist}</span>
+    `;
+
+    div.onclick = () => loadSong(realIndex);
     playlistEl.appendChild(div);
   }
-  renderPagination();
+
+  renderPagination(filteredPlaylist.length);
 }
 
-function renderPagination(){
+searchInput.oninput = () => {
+  currentPage = 1;
+  renderPlaylist();
+};
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    searchInput.value = '';
+    renderPlaylist();
+  }
+});
+
+
+function renderPagination(totalItems = playlist.length){
   paginationEl.innerHTML='';
-  const totalPages=Math.ceil(playlist.length/songsPerPage);
-  for(let i=1;i<=totalPages;i++){
-    const btn=document.createElement('button');
-    btn.textContent=i;
-    btn.style.background=i===currentPage?'rgba(124,58,237,0.25)':'var(--glass)';
-    btn.onclick=()=>{currentPage=i; renderPlaylist();}
+  const totalPages = Math.ceil(totalItems / songsPerPage);
+
+  for(let i = 1; i <= totalPages; i++){
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    btn.style.background =
+      i === currentPage ? 'rgba(124,58,237,0.25)' : 'var(--glass)';
+
+    btn.onclick = () => {
+      currentPage = i;
+      renderPlaylist();
+    };
+
     paginationEl.appendChild(btn);
   }
 }
+
 
 function loadSong(i){
   current=i;
@@ -201,6 +479,147 @@ audio.onended=()=>{if(isRepeat) loadSong(current); else nextBtn.onclick();}
 // initialize
 renderPlaylist();
 loadSong(0);
+
+
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+
+function updateThemeIcon(){
+  if(document.body.classList.contains('light')){
+    themeIcon.className = 'fas fa-sun';
+  }else{
+    themeIcon.className = 'fas fa-moon';
+  }
+}
+
+themeToggle.onclick = () => {
+  document.body.classList.toggle('light');
+  updateThemeIcon();
+};
+
+// init icon
+updateThemeIcon();
+
+
+// ===== SAVE THEME =====
+if(localStorage.getItem('theme') === 'light'){
+  document.body.classList.add('light');
+}
+
+updateThemeIcon();
+
+themeToggle.onclick = () => {
+  document.body.classList.toggle('light');
+  localStorage.setItem(
+    'theme',
+    document.body.classList.contains('light') ? 'light' : 'dark'
+  );
+  updateThemeIcon();
+};
+
+const likeBtn = document.getElementById('likeBtn');
+let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+
+function updateLike(){
+  likeBtn.classList.toggle('active', favorites.includes(current));
+}
+
+likeBtn.onclick = () => {
+  if(favorites.includes(current)){
+    favorites = favorites.filter(i => i !== current);
+  }else{
+    favorites.push(current);
+  }
+  localStorage.setItem('favorites', JSON.stringify(favorites));
+  updateLike();
+};
+
+updateLike();
+
+
+document.addEventListener('keydown', e => {
+  if(e.target.tagName === 'INPUT') return;
+
+  if(e.code === 'Space'){
+    e.preventDefault();
+    playBtn.onclick();
+  }
+  if(e.code === 'ArrowRight'){
+    audio.currentTime += 5;
+  }
+  if(e.code === 'ArrowLeft'){
+    audio.currentTime -= 5;
+  }
+  if(e.code === 'ArrowUp'){
+    audio.volume = Math.min(1, audio.volume + 0.05);
+  }
+  if(e.code === 'ArrowDown'){
+    audio.volume = Math.max(0, audio.volume - 0.05);
+  }
+});
+
+const videoToggle = document.getElementById('videoToggle');
+const videoModal = document.getElementById('videoModal');
+const greenVideo = document.getElementById('greenVideo');
+const canvas = document.getElementById('videoCanvas');
+const ctx = canvas.getContext('2d');
+const closeVideo = document.getElementById('closeVideo');
+
+videoToggle.onclick = () => {
+  videoModal.classList.add('show');
+  greenVideo.currentTime = 0;
+
+  // wait until the video is ready
+  greenVideo.muted = true;
+  greenVideo.play().catch(err => console.log('Video play failed:', err));
+
+  greenVideo.addEventListener('canplay', function startDrawing() {
+    drawVideo();
+    greenVideo.removeEventListener('canplay', startDrawing);
+  });
+};
+
+
+
+closeVideo.onclick = () => {
+  videoModal.classList.remove('show');
+  greenVideo.pause();
+};
+
+greenVideo.onloadedmetadata = () => {
+  canvas.width = greenVideo.videoWidth;
+  canvas.height = greenVideo.videoHeight;
+};
+
+
+function drawVideo(){
+  if(!videoModal.classList.contains('show')) return;
+
+  if(greenVideo.readyState >= 2){
+    canvas.width = greenVideo.videoWidth;
+    canvas.height = greenVideo.videoHeight;
+
+    ctx.drawImage(greenVideo, 0, 0, canvas.width, canvas.height);
+
+    const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = frame.data;
+
+    for(let i=0;i<data.length;i+=4){
+      const r=data[i], g=data[i+1], b=data[i+2];
+      if(g>120 && g>r+30 && g>b+30) data[i+3]=0;
+    }
+
+    ctx.putImageData(frame,0,0);
+  }
+
+  requestAnimationFrame(drawVideo);
+  // console.log('Drawing frame...'); // uncomment for debugging
+}
+
+
+
+
 </script>
+
 </body>
 </html>
