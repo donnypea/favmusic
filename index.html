@@ -300,7 +300,6 @@ body.light .controls button{
   position: absolute;
   border-radius: 50%;
   opacity: 0.6;
-  background: linear-gradient(135deg, #7c3aed, #2b6ce4);
   animation: floatAnim linear infinite;
 }
 
@@ -326,16 +325,30 @@ body.light .controls button{
 
 <div id="floatingUI"></div>
 <script>
-  const floatingUI = document.getElementById('floatingUI');
+const floatingUI = document.getElementById('floatingUI');
+
+// Array of Font Awesome music icon classes
+const musicIcons = [
+  'fa-solid fa-music',
+  'fa-solid fa-headphones',
+  'fa-solid fa-record-vinyl',
+  'fa-solid fa-guitar',
+  'fa-solid fa-drum'
+];
 
 function createBubble() {
-  const bubble = document.createElement('div');
-  bubble.className = 'floating-bubble';
-  const size = Math.random() * 20 + 10; // 10px–30px
-  bubble.style.width = `${size}px`;
-  bubble.style.height = `${size}px`;
+  const bubble = document.createElement('i'); // create an <i> element for FA
+  bubble.className = musicIcons[Math.floor(Math.random() * musicIcons.length)] + ' floating-bubble';
+
+  const size = Math.random() * 20 + 12; // 12px–32px
+  bubble.style.fontSize = `${size}px`;
   bubble.style.left = `${Math.random() * 100}vw`;
   bubble.style.animationDuration = `${Math.random() * 8 + 5}s`; // 5-13s
+  bubble.style.color = 'white';
+  bubble.style.position = 'absolute';
+  bubble.style.pointerEvents = 'none';
+  bubble.style.opacity = 0.6;
+
   floatingUI.appendChild(bubble);
 
   // Remove after animation ends
@@ -344,8 +357,8 @@ function createBubble() {
 
 // Continuously create bubbles
 setInterval(createBubble, 500); // every 0.5s
-
 </script>
+
 <body>
   <div class="theme-toggle" id="themeToggle" title="Toggle theme">
   <i class="fas fa-moon" id="themeIcon"></i>
