@@ -18,6 +18,20 @@ body.light{
   color:#0f1724;
 }
 
+/* Animated gradient background for the whole body */
+body.animated-bg {
+  background: linear-gradient(270deg, #7c3aed, #2b6ce4, #e91e63, #ff9800);
+  background-size: 800% 800%;
+  animation: gradientBG 20s ease infinite;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
 /* Floating toggle button */
 .theme-toggle{
   position:fixed;
@@ -274,23 +288,67 @@ body.light .controls button{
   touch-action:manipulation;
 }
 
+#floatingUI {
+  position: fixed;
+  inset: 0;
+  pointer-events: none; /* don’t block clicks */
+  z-index: 1;
+  overflow: hidden;
+}
+
+.floating-bubble {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.6;
+  background: linear-gradient(135deg, #7c3aed, #2b6ce4);
+  animation: floatAnim linear infinite;
+}
+
+@keyframes floatAnim {
+  0% {
+    transform: translateY(100vh) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-10vh) scale(1);
+    opacity: 0;
+  }
+}
 
 </style>
 </head>
 
+<div id="floatingUI"></div>
+<script>
+  const floatingUI = document.getElementById('floatingUI');
+
+function createBubble() {
+  const bubble = document.createElement('div');
+  bubble.className = 'floating-bubble';
+  const size = Math.random() * 20 + 10; // 10px–30px
+  bubble.style.width = `${size}px`;
+  bubble.style.height = `${size}px`;
+  bubble.style.left = `${Math.random() * 100}vw`;
+  bubble.style.animationDuration = `${Math.random() * 8 + 5}s`; // 5-13s
+  floatingUI.appendChild(bubble);
+
+  // Remove after animation ends
+  setTimeout(() => bubble.remove(), parseFloat(bubble.style.animationDuration) * 1000);
+}
+
+// Continuously create bubbles
+setInterval(createBubble, 500); // every 0.5s
+
+</script>
 <body>
   <div class="theme-toggle" id="themeToggle" title="Toggle theme">
   <i class="fas fa-moon" id="themeIcon"></i>
-</div>
-
-
-<div id="videoModal" class="video-modal">
-  <canvas id="videoCanvas"></canvas>
-  <button id="closeVideo">✕</button>
-
-  <video id="greenVideo" muted loop playsinline>
-    <source src="images/wagurigif.mp4" type="video/mp4">
-  </video>
 </div>
 
 
@@ -612,6 +670,26 @@ function drawVideo(){
   requestAnimationFrame(drawVideo);
   // console.log('Drawing frame...'); // uncomment for debugging
 }
+
+
+const bgToggle = document.getElementById('bgToggle');
+const bgColorPicker = document.getElementById('bgColorPicker');
+
+// Show color picker when palette icon is clicked
+bgToggle.onclick = () => bgColorPicker.click();
+
+// When user picks a color
+bgColorPicker.oninput = (e) => {
+  document.body.style.background = e.target.value;
+  localStorage.setItem('bgColor', e.target.value);
+};
+
+// Load saved background on page load
+const savedBg = localStorage.getItem('bgColor');
+if(savedBg){
+  document.body.style.background = savedBg;
+}
+
 
 
 
