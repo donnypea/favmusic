@@ -340,7 +340,7 @@ function createBubble() {
   const bubble = document.createElement('i'); // create an <i> element for FA
   bubble.className = musicIcons[Math.floor(Math.random() * musicIcons.length)] + ' floating-bubble';
 
-  const size = Math.random() * 20 + 12; // 12px–32px
+  const size = Math.random() * 10 + 6; // 12px–32px
   bubble.style.fontSize = `${size}px`;
   bubble.style.left = `${Math.random() * 100}vw`;
   bubble.style.animationDuration = `${Math.random() * 8 + 5}s`; // 5-13s
