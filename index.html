@@ -970,16 +970,31 @@ function renderPagination(totalItems = playlist.length){
 }
 
 
+// When a song is loaded, save it to localStorage
 function loadSong(i){
-  current=i;
-  const song=playlist[i];
-  audio.src=song.file;
-  titleEl.textContent=song.title;
-  artistEl.textContent=song.artist || 'Unknown';
-  coverEl.style.backgroundImage=`url('${song.cover}')`;
+  current = i;
+  const song = playlist[i];
+  audio.src = song.file;
+  titleEl.textContent = song.title;
+  artistEl.textContent = song.artist || 'Unknown';
+  coverEl.style.backgroundImage = `url('${song.cover}')`;
   audio.play();
   renderPlaylist();
+
+  // Save current song index to localStorage
+  localStorage.setItem('lastPlayedSong', i);
 }
+
+// On page load, check if there's a song saved
+window.addEventListener('load', () => {
+  const lastPlayed = localStorage.getItem('lastPlayedSong');
+  if(lastPlayed !== null && playlist[lastPlayed]){
+    loadSong(Number(lastPlayed));
+  } else {
+    loadSong(0); // default to first song
+  }
+});
+
 
 playBtn.onclick=()=>audio.paused?audio.play():audio.pause();
 nextBtn.onclick=()=>{if(isShuffle) loadSong(Math.floor(Math.random()*playlist.length)); else loadSong((current+1)%playlist.length);}
