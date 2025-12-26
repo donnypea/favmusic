@@ -19,6 +19,17 @@ body.light{
   color:#0f1724;
 }
 
+.floating-flower{
+  position:absolute;
+  width: 200px;
+  height: 160px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.75;
+  animation: floatAnim linear infinite;
+  pointer-events: none;
+}
+
 /* Sidebar */
 .sidebar {
   position: fixed;
@@ -551,6 +562,28 @@ const musicIcons = [
   'fa-solid fa-guitar',
   'fa-solid fa-drum'
 ];
+
+
+function createFlower(){
+  const flower = document.createElement('div');
+  flower.className = 'floating-flower';
+
+  flower.style.backgroundImage = "url('images/flower2.png')";
+  flower.style.left = Math.random() * 100 + 'vw';
+  flower.style.animationDuration = (Math.random() * 8 + 6) + 's';
+  flower.style.transform = `scale(${Math.random() * 0.8 + 0.4})`;
+
+  floatingUI.appendChild(flower);
+
+  setTimeout(() => flower.remove(),
+    parseFloat(flower.style.animationDuration) * 1000
+  );
+}
+
+// spawn every 1.2s
+setInterval(createFlower, 1200);
+
+
 
 function createBubble() {
   const bubble = document.createElement('i'); // create an <i> element for FA
